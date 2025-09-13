@@ -1,43 +1,26 @@
-name: "Build and Deploy"
+name: "Build and Deploy Jekyll Blog"
+
 on:
   push:
     branches:
       - main
-      - master
     paths-ignore:
       - .gitignore
       - README.md
       - LICENSE
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-# Allow one concurrent deployment
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # submodules: true
-          # If using the 'assets' git submodule from Chirpy Starter, uncomment above
-          # (See: https://github.com/cotes2020/chirpy-starter/tree/main/assets)
-
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -46,28 +29,43 @@ jobs:
           bundler-cache: true
 
       - name: Build site
-        run: bundle exec jekyll b -d "_site${{ steps.pages.outputs.base_path }}"
+        run: bundle exec jekyll b -d _site
         env:
           JEKYLL_ENV: "production"
 
       - name: Test site
         run: |
           bundle exec htmlproofer _site \
-            \-\-disable-external \
-            \-\-ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
+            --disable-external \
+            --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
 
-      - name: Upload site artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site${{ steps.pages.outputs.base_path }}"
+          path: "_site"
 
+  # REPLACED DEPLOY JOB: Uses peaceiris/action-gh-pages to deploy to an EXTERNAL repository
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pages-artifact
+          path: _site
+
+      - name: Deploy to Blog Folder
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          # Use a PAT that has write access to the TARGET repo (hansworld.github.io)
+          personal_token: ${{ secrets.PAT_TOKEN }}
+          # Publish the built site files
+          publish_dir: ./_site
+          # The IMPORTANT part: Target your main portfolio repository
+          external_repository: maxrayman/maxrayman.github.io
+          # The CRITICAL part: Deploy to the 'blog' subfolder
+          destination_dir: blog
+          # Force overwrite the blog folder completely
+          force_orphan: true
+          commit_message: "Deploy Jekyll Blog: ${{ github.sha }}"
