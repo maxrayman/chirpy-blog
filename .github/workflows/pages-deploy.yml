@@ -45,28 +45,25 @@ jobs:
         with:
           path: "_site"
 
-  # REPLACED DEPLOY JOB: Uses peaceiris/action-gh-pages to deploy to an EXTERNAL repository
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: pages-artifact
-          path: _site
-
-      - name: Deploy to Blog Folder
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          # Use a PAT that has write access to the TARGET repo (hansworld.github.io)
-          personal_token: ${{ secrets.PAT_TOKEN }}
-          # Publish the built site files
-          publish_dir: ./_site
-          # The IMPORTANT part: Target your main portfolio repository
-          external_repository: maxrayman/maxrayman.github.io
-          # The CRITICAL part: Deploy to the 'blog' subfolder
-          destination_dir: blog
-          # Force overwrite the blog folder completely
-          force_orphan: true
-          commit_message: "Deploy Jekyll Blog: ${{ github.sha }}"
+  # -----------------------------
+# Deploy job is disabled for now
+# -----------------------------
+#   deploy:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     steps:
+#       - name: Download artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: pages-artifact
+#           path: _site
+#
+#       - name: Deploy to Blog Folder
+#         uses: peaceiris/actions-gh-pages@v3
+#         with:
+#           personal_token: ${{ secrets.PAT_TOKEN }}
+#           publish_dir: ./_site
+#           external_repository: maxrayman/maxrayman.github.io
+#           destination_dir: blog
+#           force_orphan: true
+#           commit_message: "Deploy Jekyll Blog: ${{ github.sha }}"
